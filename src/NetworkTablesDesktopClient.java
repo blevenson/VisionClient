@@ -27,9 +27,14 @@ public class NetworkTablesDesktopClient {
 		 * here does not work, or is not called, the commands during
 		 * auto don't get hungup.
 		 */
-		boolean done = !(table.getBoolean("done"));
+		table.putBoolean("done", false);
+		boolean done = (table.getBoolean("done"));
+
 		
-		while(true)
+		leftMotorC = 1;
+		rightMotorC = 1;
+		
+		while(!done)
 		{
 			try{
 				Thread.sleep(1000);
@@ -39,16 +44,16 @@ public class NetworkTablesDesktopClient {
 			}
 			
 			
-			
-			while(!done)
-			{
 				//scan image and then set the motor values
-			}
+				//update done
+			leftMotorC *= -1;
+			rightMotorC *= -1;
 			
 			
 	    	table.putNumber("leftMotor", leftMotorC);
 	    	table.putNumber("rightMotor", rightMotorC);
 			System.out.println("Left: " + leftMotorC + " Right: " + rightMotorC);
+			
 		}
 	}
 }
