@@ -32,16 +32,7 @@ public class NetworkTablesDesktopClient {
 
 	public void run() {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		VideoCapture vid = new VideoCapture("rtsp://10.7.66.20/mjpg/video.mjpg");
-		if(vid.isOpened())
-		{
-			System.out.println("Vid opened");
-		}
-		else
-		{
-			System.out.println("Vid not opened");
-			vid.open(1);
-		}
+		VideoCapture vid = new VideoCapture(0);
 		
 		NetworkTable.setClientMode();
 		NetworkTable.setIPAddress("roborio-766.local");
@@ -69,8 +60,6 @@ public class NetworkTablesDesktopClient {
 		table.putBoolean("done", false);
 		boolean done = (table.getBoolean("done"));
 
-		leftMotorC = 0;
-		rightMotorC = 0;
 		Mat satImg = new Mat();
 		while (!done) {
 //			try {
