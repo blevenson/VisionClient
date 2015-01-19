@@ -28,11 +28,21 @@ public class NetworkTablesDesktopClient {
 	 * image into real motor values...It would be very messy if it was all in
 	 * one method...Gross.
 	 */
+	private NetworkTable table;
 	private double leftMotorC = 0d;
 	private double rightMotorC = 0d;
 	private boolean done;
 
 	private int picCount = 0;
+	//min
+	public int HMIN = 49;
+	private int SMIN = 100;
+	private int VMIN = 100;
+	//Max
+	private int HMAX = 55;
+	private int SMAX = 255;
+	private int VMAX = 255;
+	
 	private final boolean PRINT = false;
 
 	public static void main(String[] args) {
@@ -45,7 +55,7 @@ public class NetworkTablesDesktopClient {
 
 		NetworkTable.setClientMode();
 		NetworkTable.setIPAddress("roborio-766.local");
-		NetworkTable table = NetworkTable.getTable("dataTable");
+		table = NetworkTable.getTable("dataTable");
 
 		Mat img = new Mat();
 		vid.read(img);
@@ -67,6 +77,15 @@ public class NetworkTablesDesktopClient {
 		 * Done starts as true, so that if the image processing here does not
 		 * work, or is not called, the commands during auto don't get hungup.
 		 */
+		//Put sliders
+		table.putNumber("HMIN", HMIN);
+		table.putNumber("SMIN", SMIN);
+		table.putNumber("VMIN", VMIN);
+		
+		table.putNumber("HMAX", HMAX);
+		table.putNumber("SMAX", SMAX);
+		table.putNumber("VMAX", VMAX);
+		
 		table.putBoolean("done", false);
 		done = (table.getBoolean("done"));
 
@@ -75,6 +94,7 @@ public class NetworkTablesDesktopClient {
 		while (!done) {
 
 			vid.read(img);
+			//img = Highgui.imread("file:///Users/Blevenson/git/VisionClient/RefPics/rawMove_0.jpeg");
 
 			// Imgproc.threshold(img, pic, 100, 255, Imgproc.THRESH_BINARY);
 			// Imgproc.cvtColor(img, pic, Imgproc.COLOR_RGB2HSV);
@@ -85,19 +105,32 @@ public class NetworkTablesDesktopClient {
 			// Imgproc.adaptiveThreshold(satImg , satImg , 255,
 			// Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 401, -10);
 
-			Imgproc.cvtColor(img, hsv, Imgproc.COLOR_RGB2HSV);
+			Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
 			// Imgproc.threshold(hsv, satImg, 250, 800, Imgproc.THRESH_BINARY);
-			Core.inRange(hsv, new Scalar(49, 100, 100), new Scalar(55, 255, 255), satImg);
+			Core.inRange(hsv, new Scalar(HMIN, SMIN, VMIN), new Scalar(HMAX, SMAX, VMAX), satImg);
 
 			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 
 			if(PRINT)savePics(img);
+			
+			updateSliderValues();
 
 			table.putNumber("leftMotor", leftMotorC);
 			table.putNumber("rightMotor", rightMotorC);
 			// System.out.println("Left: " + leftMotorC + " Right: " + rightMotorC);
 
 		}
+	}
+
+	private void updateSliderValues() {
+		//Update values
+		HMIN = (int)(table.getNumber("HMIN"));
+		SMIN = (int)(table.getNumber("SMIN"));
+		VMIN = (int)(table.getNumber("VMIN"));
+		HMAX = (int)(table.getNumber("HMAX"));
+		SMAX = (int)(table.getNumber("SMAX"));
+		VMAX = (int)(table.getNumber("VMAX"));
+		
 	}
 
 	public static Image toBufferedImage(Mat m) {
