@@ -15,6 +15,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
@@ -65,9 +66,12 @@ public class NetworkTablesDesktopClient {
 		table.putBoolean("done", false);
 		boolean done = (table.getBoolean("done"));
 		
+		//int picCount = 0;
+		
 		Mat hsv = new Mat();
 		Mat satImg = new Mat();
-		while (!done) {
+	while (!done) {
+//		while(picCount < 10){
 //			try {
 //				Thread.sleep(1000);
 //			} catch (InterruptedException ex) {
@@ -94,11 +98,13 @@ public class NetworkTablesDesktopClient {
 		    lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 		    
 		    
-		    
 		    table.putNumber("leftMotor", leftMotorC);
 			table.putNumber("rightMotor", rightMotorC);
 			//System.out.println("Left: " + leftMotorC + " Right: " + rightMotorC);
-
+			
+//			Highgui.imwrite("C://Users/Student/ImagePics/rawMove_" + picCount + ".jpeg", img);
+//			picCount++;
+//			System.out.println("Looping: " + picCount);
 		}
 	}
 
