@@ -30,6 +30,10 @@ public class NetworkTablesDesktopClient {
 	 */
 	private double leftMotorC = 0d;
 	private double rightMotorC = 0d;
+	private boolean done;
+
+	private int picCount = 0;
+	private final boolean PRINT = false;
 
 	public static void main(String[] args) {
 		new NetworkTablesDesktopClient().run();
@@ -38,15 +42,15 @@ public class NetworkTablesDesktopClient {
 	public void run() {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		VideoCapture vid = new VideoCapture(1);
-		
+
 		NetworkTable.setClientMode();
 		NetworkTable.setIPAddress("roborio-766.local");
 		NetworkTable table = NetworkTable.getTable("dataTable");
-		
+
 		Mat img = new Mat();
 		vid.read(img);
-		
-		//Display Setup.   For Testing
+
+		// Display Setup. For Testing
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JLabel lblimage = new JLabel(new ImageIcon(toBufferedImage(img)));
@@ -56,58 +60,45 @@ public class NetworkTablesDesktopClient {
 		frame.add(mainPanel);
 		frame.setSize(500, 500);
 		frame.setVisible(true);
-		
+
 		Mat pic = new Mat();
-		
+
 		/*
 		 * Done starts as true, so that if the image processing here does not
 		 * work, or is not called, the commands during auto don't get hungup.
 		 */
 		table.putBoolean("done", false);
-		boolean done = (table.getBoolean("done"));
-		
-		//int picCount = 0;
-		
+		done = (table.getBoolean("done"));
+
 		Mat hsv = new Mat();
 		Mat satImg = new Mat();
-	while (!done) {
-//		while(picCount < 10){
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException ex) {
-//				System.out.println("0 noses.....I 2 tyd to swep");
-//			}
+		while (!done) {
 
-			// scan image and then set the motor values
-			// update done
 			vid.read(img);
-			//Imgproc.threshold(img, pic, 100, 255, Imgproc.THRESH_BINARY);
-//			Imgproc.cvtColor(img, pic,  Imgproc.COLOR_RGB2HSV);
-//			ArrayList<Mat> channels = new ArrayList<Mat>();
-//			Core.split(pic, channels);
-//			satImg = channels.get(1);
-//			Imgproc.medianBlur(satImg , satImg , 11);
-//			Imgproc.adaptiveThreshold(satImg , satImg , 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 401, -10);
-			
-		    Imgproc.cvtColor(img, hsv, Imgproc.COLOR_RGB2HSV);
-		    //Imgproc.threshold(hsv, satImg, 250, 800, Imgproc.THRESH_BINARY);
-		    Core.inRange(hsv, new Scalar(49, 100, 100), new Scalar(55,255,255), satImg);
-		    
-		     
-		    
-		    lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
-		    
-		    
-		    table.putNumber("leftMotor", leftMotorC);
+
+			// Imgproc.threshold(img, pic, 100, 255, Imgproc.THRESH_BINARY);
+			// Imgproc.cvtColor(img, pic, Imgproc.COLOR_RGB2HSV);
+			// ArrayList<Mat> channels = new ArrayList<Mat>();
+			// Core.split(pic, channels);
+			// satImg = channels.get(1);
+			// Imgproc.medianBlur(satImg , satImg , 11);
+			// Imgproc.adaptiveThreshold(satImg , satImg , 255,
+			// Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 401, -10);
+
+			Imgproc.cvtColor(img, hsv, Imgproc.COLOR_RGB2HSV);
+			// Imgproc.threshold(hsv, satImg, 250, 800, Imgproc.THRESH_BINARY);
+			Core.inRange(hsv, new Scalar(49, 100, 100), new Scalar(55, 255, 255), satImg);
+
+			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
+
+			if(PRINT)savePics(img);
+
+			table.putNumber("leftMotor", leftMotorC);
 			table.putNumber("rightMotor", rightMotorC);
-			//System.out.println("Left: " + leftMotorC + " Right: " + rightMotorC);
-			
-//			Highgui.imwrite("C://Users/Student/ImagePics/rawMove_" + picCount + ".jpeg", img);
-//			picCount++;
-//			System.out.println("Looping: " + picCount);
+			// System.out.println("Left: " + leftMotorC + " Right: " + rightMotorC);
+
 		}
 	}
-
 
 	public static Image toBufferedImage(Mat m) {
 		int type = BufferedImage.TYPE_BYTE_GRAY;
@@ -123,5 +114,20 @@ public class NetworkTablesDesktopClient {
 		System.arraycopy(b, 0, targetPixels, 0, b.length);
 		return image;
 
+	}
+
+	public void savePics(Mat img) {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException ex) {
+			System.out.println("0 noses.....I 2 tyd to swep");
+		}
+		// change address for your computer
+		Highgui.imwrite("C://Users/Student/ImagePics/pic_" + picCount + ".jpeg", img);
+		picCount++;
+		
+		if(picCount > 10)done = true;
+		
+		System.out.println("Looping: " + picCount);
 	}
 }
