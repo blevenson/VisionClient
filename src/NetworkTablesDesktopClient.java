@@ -34,14 +34,24 @@ public class NetworkTablesDesktopClient {
 	private boolean done;
 
 	private int picCount = 0;
-	//min
-	public int HMIN = 49;
-	private int SMIN = 100;
-	private int VMIN = 100;
-	//Max
-	private int HMAX = 55;
-	private int SMAX = 255;
-	private int VMAX = 255;
+	//Green Reflector
+		//min
+		public int HMIN = 50;
+		private int SMIN = 120;
+		private int VMIN = 100;
+		//Max
+		private int HMAX = 90;
+		private int SMAX = 200;
+		private int VMAX = 255;
+	//Box Tracer
+		//min
+		public int B_HMIN = 20;
+		private int B_SMIN = 80;
+		private int B_VMIN = 125;
+		//Max
+		private int B_HMAX = 100;
+		private int B_SMAX = 255;
+		private int B_VMAX = 255;
 	
 	private final boolean PRINT = false;
 
