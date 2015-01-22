@@ -36,12 +36,12 @@ public class NetworkTablesDesktopClient {
 	private int picCount = 0;
 	//Green Reflector
 		//min
-		public int HMIN = 50;
-		private int SMIN = 120;
-		private int VMIN = 100;
+		public int HMIN = 40;
+		private int SMIN = 150;
+		private int VMIN = 120;
 		//Max
-		private int HMAX = 90;
-		private int SMAX = 200;
+		private int HMAX = 72;
+		private int SMAX = 255;
 		private int VMAX = 255;
 	//Box Tracer
 		//min
@@ -53,7 +53,7 @@ public class NetworkTablesDesktopClient {
 		private int B_SMAX = 255;
 		private int B_VMAX = 255;
 	
-	private final boolean PRINT = false;
+	private final boolean PRINT = true;
 
 	public static void main(String[] args) {
 		new NetworkTablesDesktopClient().run();
@@ -119,7 +119,7 @@ public class NetworkTablesDesktopClient {
 			// Imgproc.threshold(hsv, satImg, 250, 800, Imgproc.THRESH_BINARY);
 			Core.inRange(hsv, new Scalar(HMIN, SMIN, VMIN), new Scalar(HMAX, SMAX, VMAX), satImg);
 
-			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
+			lblimage.setIcon(new ImageIcon(toBufferedImage(img)));
 
 			if(PRINT)savePics(img);
 			
@@ -166,10 +166,10 @@ public class NetworkTablesDesktopClient {
 			System.out.println("0 noses.....I 2 tyd to swep");
 		}
 		// change address for your computer
-		Highgui.imwrite("C://Users/Student/ImagePics/pic_" + picCount + ".jpeg", img);
+		Highgui.imwrite("C://Users/Student/ImagePics/rawRing_" + picCount + ".jpeg", img);
 		picCount++;
 		
-		if(picCount > 10)done = true;
+		if(picCount >= 10)done = true;
 		
 		System.out.println("Looping: " + picCount);
 	}
