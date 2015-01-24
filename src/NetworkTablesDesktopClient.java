@@ -118,8 +118,10 @@ public class NetworkTablesDesktopClient {
 			Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
 			// Imgproc.threshold(hsv, satImg, 250, 800, Imgproc.THRESH_BINARY);
 			Core.inRange(hsv, new Scalar(HMIN, SMIN, VMIN), new Scalar(HMAX, SMAX, VMAX), satImg);
+			Imgproc.erode(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_ERODE, new Size(2,2)));
+			Imgproc.dilate(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_DILATE, new Size(2,2)));
 
-			lblimage.setIcon(new ImageIcon(toBufferedImage(img)));
+			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 
 			if(PRINT)savePics(img);
 			
