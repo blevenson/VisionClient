@@ -53,7 +53,7 @@ public class NetworkTablesDesktopClient {
 		private int B_SMAX = 255;
 		private int B_VMAX = 255;
 	
-	private final boolean PRINT = true;
+	private final boolean PRINT = false;
 
 	public static void main(String[] args) {
 		new NetworkTablesDesktopClient().run();
