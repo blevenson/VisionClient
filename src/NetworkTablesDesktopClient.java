@@ -1,5 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
@@ -13,6 +14,9 @@ import javax.swing.JPanel;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
@@ -36,11 +40,11 @@ public class NetworkTablesDesktopClient {
 	private int picCount = 0;
 	//Green Reflector
 		//min
-		public int HMIN = 40;
-		private int SMIN = 150;
-		private int VMIN = 120;
+		public int HMIN = 90;
+		private int SMIN = 100;
+		private int VMIN = 250;
 		//Max
-		private int HMAX = 72;
+		private int HMAX = 255;
 		private int SMAX = 255;
 		private int VMAX = 255;
 	//Box Tracer
@@ -85,7 +89,7 @@ public class NetworkTablesDesktopClient {
 
 		/*
 		 * Done starts as true, so that if the image processing here does not
-		 * work, or is not called, the commands during auto don't get hungup.
+		 * work, or is not called, the commands during auto don't get hung-up.
 		 */
 		//Put sliders
 		table.putNumber("HMIN", HMIN);
@@ -101,31 +105,42 @@ public class NetworkTablesDesktopClient {
 
 		Mat hsv = new Mat();
 		Mat satImg = new Mat();
+		
 		while (!done) {
 
 			vid.read(img);
-			//img = Highgui.imread("file:///Users/Blevenson/git/VisionClient/RefPics/rawMove_0.jpeg");
-
-			// Imgproc.threshold(img, pic, 100, 255, Imgproc.THRESH_BINARY);
-			// Imgproc.cvtColor(img, pic, Imgproc.COLOR_RGB2HSV);
-			// ArrayList<Mat> channels = new ArrayList<Mat>();
-			// Core.split(pic, channels);
-			// satImg = channels.get(1);
-			// Imgproc.medianBlur(satImg , satImg , 11);
-			// Imgproc.adaptiveThreshold(satImg , satImg , 255,
-			// Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 401, -10);
-
+			
 			Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
-			// Imgproc.threshold(hsv, satImg, 250, 800, Imgproc.THRESH_BINARY);
+			
+			//Real Values
 			Core.inRange(hsv, new Scalar(HMIN, SMIN, VMIN), new Scalar(HMAX, SMAX, VMAX), satImg);
-			//Imgproc.erode(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_ERODE, new Size(2,2)));
-			//Imgproc.dilate(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_DILATE, new Size(2,2)));
-			Imgproc.erode(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3,3)));
+			//Core.inRange(hsv, new Scalar(B_HMIN, B_SMIN, B_VMIN), new Scalar(B_HMAX, B_SMAX, B_VMAX), satImg);
+			
+			Imgproc.erode(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1,1)));
 			Imgproc.dilate(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(8,8)));
 			
 			//Track image
-			//List<MatofPoint> contours = new List<MatofPoints>();
-			//Imgproc.findContours(satImg, )
+			List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+			Mat hierarchy = new Mat();
+			Imgproc.findContours(satImg, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+			Imgproc.drawContours(satImg, contours, -1, new Scalar(255,255,0));
+			
+			Point left = new Point();
+			Point right = new Point();
+			
+			for(MatOfPoint point : contours)
+			{
+				Rect rectangle = Imgproc.boundingRect(point);
+				//System.out.println("(" + rectangle.x + " " + rectangle.y + ")");
+				
+				
+				Core.rectangle(satImg, new Point(rectangle.x, rectangle.y),
+						new Point(rectangle.x + rectangle.width, 
+						rectangle.y + rectangle.height), new Scalar(255,255,0));
+			}
+			
+
+			Core.rectangle(satImg, left, right, new Scalar(255,255,0));
 			
 			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 
@@ -174,7 +189,7 @@ public class NetworkTablesDesktopClient {
 			System.out.println("0 noses.....I 2 tyd to swep");
 		}
 		// change address for your computer
-		Highgui.imwrite("C://Users/Student/ImagePics/rawRing_" + picCount + ".jpeg", img);
+		Highgui.imwrite("C://Users/Student/ImagePics/filteredBox_" + picCount + ".jpeg", img);
 		picCount++;
 		
 		if(picCount >= 10)done = true;
