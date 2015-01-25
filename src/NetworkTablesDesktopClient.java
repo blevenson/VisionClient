@@ -39,6 +39,7 @@ public class NetworkTablesDesktopClient {
 	
 	private Point left;
 	private Point right;
+	private Point bigCenter;
 	private double oldArea;
 	private double area;
 	private double bigHeight = 0;
@@ -73,7 +74,7 @@ public class NetworkTablesDesktopClient {
 
 	public void run() {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		VideoCapture vid = new VideoCapture(1);
+		VideoCapture vid = new VideoCapture(0);
 
 		NetworkTable.setClientMode();
 		NetworkTable.setIPAddress("roborio-766.local");
@@ -81,6 +82,7 @@ public class NetworkTablesDesktopClient {
 		
 		left = new Point();
 		right = new Point();
+		bigCenter = new Point();
 		oldArea = 0;
 		area = 0;
 
@@ -171,6 +173,11 @@ public class NetworkTablesDesktopClient {
 			bigWidth = (Math.sqrt(Math.pow((right.x - left.x), 2) + Math.pow((left.y - left.y), 2)));
 			area = bigHeight * bigWidth;
 			
+			//Calculate center of tote.  Used to track the tote's position in the frame
+			bigCenter.x = left.x + bigWidth/2;
+			bigCenter.y = left.y + bigHeight/2;
+			Core.circle(satImg, bigCenter, 10, new Scalar(255, 0, 0));
+			
 			if(oldArea > area)
 			{
 				System.out.println("You are going away from the box");
@@ -181,6 +188,7 @@ public class NetworkTablesDesktopClient {
 			
 			System.out.println("Old: " + oldArea + "  New Area: " + area);
 			oldArea = area;
+			
 			
 			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 
