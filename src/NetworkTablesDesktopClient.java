@@ -39,6 +39,11 @@ public class NetworkTablesDesktopClient {
 	
 	private Point left;
 	private Point right;
+	private double oldArea;
+	private double area;
+	private double bigHeight = 0;
+	private double bigWidth = 0;
+	
 
 	private int picCount = 0;
 	//Green Reflector
@@ -68,7 +73,7 @@ public class NetworkTablesDesktopClient {
 
 	public void run() {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		VideoCapture vid = new VideoCapture(0);
+		VideoCapture vid = new VideoCapture(1);
 
 		NetworkTable.setClientMode();
 		NetworkTable.setIPAddress("roborio-766.local");
@@ -76,6 +81,8 @@ public class NetworkTablesDesktopClient {
 		
 		left = new Point();
 		right = new Point();
+		oldArea = 0;
+		area = 0;
 
 		Mat img = new Mat();
 		vid.read(img);
@@ -140,6 +147,7 @@ public class NetworkTablesDesktopClient {
 			for(MatOfPoint point : contours)
 			{
 				Rect rectangle = Imgproc.boundingRect(point);
+				
 				//System.out.println("(" + rectangle.x + " " + rectangle.y + ")");
 				//Find farthest left and right corners of tote
 				if(rectangle.x < left.x)
@@ -156,9 +164,23 @@ public class NetworkTablesDesktopClient {
 //						new Point(rectangle.x + rectangle.width, 
 //						rectangle.y + rectangle.height), new Scalar(255,255,0));
 			}
-			
 
 			Core.rectangle(satImg, left, right, new Scalar(255,255,0));
+			
+			bigHeight = (Math.sqrt(Math.pow((left.x - left.x), 2) + Math.pow((right.y - left.y), 2)));
+			bigWidth = (Math.sqrt(Math.pow((right.x - left.x), 2) + Math.pow((left.y - left.y), 2)));
+			area = bigHeight * bigWidth;
+			
+			if(oldArea > area)
+			{
+				System.out.println("You are going away from the box");
+			}else if(area > oldArea)
+			{
+				System.out.println("You are approching the tote");
+			}
+			
+			System.out.println("Old: " + oldArea + "  New Area: " + area);
+			oldArea = area;
 			
 			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 
