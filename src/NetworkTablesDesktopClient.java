@@ -36,6 +36,9 @@ public class NetworkTablesDesktopClient {
 	private double leftMotorC = 0d;
 	private double rightMotorC = 0d;
 	private boolean done;
+	
+	private Point left;
+	private Point right;
 
 	private int picCount = 0;
 	//Green Reflector
@@ -65,11 +68,14 @@ public class NetworkTablesDesktopClient {
 
 	public void run() {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		VideoCapture vid = new VideoCapture(1);
+		VideoCapture vid = new VideoCapture(0);
 
 		NetworkTable.setClientMode();
 		NetworkTable.setIPAddress("roborio-766.local");
 		table = NetworkTable.getTable("dataTable");
+		
+		left = new Point();
+		right = new Point();
 
 		Mat img = new Mat();
 		vid.read(img);
@@ -91,7 +97,7 @@ public class NetworkTablesDesktopClient {
 		 * Done starts as true, so that if the image processing here does not
 		 * work, or is not called, the commands during auto don't get hung-up.
 		 */
-		//Put sliders
+		//Put sliders8
 		table.putNumber("HMIN", HMIN);
 		table.putNumber("SMIN", SMIN);
 		table.putNumber("VMIN", VMIN);
@@ -125,18 +131,30 @@ public class NetworkTablesDesktopClient {
 			Imgproc.findContours(satImg, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 			Imgproc.drawContours(satImg, contours, -1, new Scalar(255,255,0));
 			
-			Point left = new Point();
-			Point right = new Point();
+			if(contours.size() > 0)
+			{
+				left = new Point(Imgproc.boundingRect(contours.get(0)).x, Imgproc.boundingRect(contours.get(0)).y);
+				right = new Point(Imgproc.boundingRect(contours.get(0)).x, Imgproc.boundingRect(contours.get(0)).y);
+			}
 			
 			for(MatOfPoint point : contours)
 			{
 				Rect rectangle = Imgproc.boundingRect(point);
 				//System.out.println("(" + rectangle.x + " " + rectangle.y + ")");
+				//Find farthest left and right corners of tote
+				if(rectangle.x < left.x)
+					left.x = rectangle.x;
+				if(rectangle.y < left.y)
+					left.y = rectangle.y;
 				
+				if((rectangle.x + rectangle.width) > right.x)
+					right.x = rectangle.x + rectangle.width;
+				if((rectangle.y + rectangle.height) > right.y)
+					right.y = rectangle.y + rectangle.height;
 				
-				Core.rectangle(satImg, new Point(rectangle.x, rectangle.y),
-						new Point(rectangle.x + rectangle.width, 
-						rectangle.y + rectangle.height), new Scalar(255,255,0));
+//				Core.rectangle(satImg, new Point(rectangle.x, rectangle.y),
+//						new Point(rectangle.x + rectangle.width, 
+//						rectangle.y + rectangle.height), new Scalar(255,255,0));
 			}
 			
 
