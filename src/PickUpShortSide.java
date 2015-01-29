@@ -25,7 +25,7 @@ import org.opencv.imgproc.Imgproc;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
-public class NetworkTablesDesktopClient {
+public class PickUpShortSide {
 
 	/*
 	 * Instance variables because I might have separate methods to turn the
@@ -50,15 +50,6 @@ public class NetworkTablesDesktopClient {
 	
 
 	private int picCount = 0;
-	//Green Reflector
-		//min
-		public int HMIN = 90;
-		private int SMIN = 100;
-		private int VMIN = 250;
-		//Max
-		private int HMAX = 255;
-		private int SMAX = 255;
-		private int VMAX = 255;
 	//Box Tracer
 		//min
 		public int B_HMIN = 20;
@@ -72,7 +63,7 @@ public class NetworkTablesDesktopClient {
 	private final boolean PRINT = false;
 
 	public static void main(String[] args) {
-		new NetworkTablesDesktopClient().run();
+		new PickUpShortSide().run();
 	}
 
 	public void run() {
@@ -112,13 +103,13 @@ public class NetworkTablesDesktopClient {
 		 * work, or is not called, the commands during auto don't get hung-up.
 		 */
 		//Put sliders8
-		table.putNumber("HMIN", HMIN);
-		table.putNumber("SMIN", SMIN);
-		table.putNumber("VMIN", VMIN);
+		table.putNumber("HMIN", B_HMIN);
+		table.putNumber("SMIN", B_SMIN);
+		table.putNumber("VMIN", B_VMIN);
 		
-		table.putNumber("HMAX", HMAX);
-		table.putNumber("SMAX", SMAX);
-		table.putNumber("VMAX", VMAX);
+		table.putNumber("HMAX", B_HMAX);
+		table.putNumber("SMAX", B_SMAX);
+		table.putNumber("VMAX", B_VMAX);
 		
 		table.putBoolean("done", false);
 		done = (table.getBoolean("done"));
@@ -134,60 +125,25 @@ public class NetworkTablesDesktopClient {
 			Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
 			
 			//Real Values
-			Core.inRange(hsv, new Scalar(HMIN, SMIN, VMIN), new Scalar(HMAX, SMAX, VMAX), satImg);
 			Core.inRange(hsv, new Scalar(B_HMIN, B_SMIN, B_VMIN), new Scalar(B_HMAX, B_SMAX, B_VMAX), yellowImg);
 			
 			Imgproc.erode(yellowImg, yellowImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 			Imgproc.erode(yellowImg, yellowImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3,3)));
 			Imgproc.dilate(yellowImg, yellowImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
-				
-			Imgproc.erode(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1,1)));
-			Imgproc.dilate(satImg, satImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(8,8)));
-			
+					
 			//Track image
-			Mat hierarchy = new Mat();
 			Mat yellowHierarchy = new Mat();
-			List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
 			List<MatOfPoint> yellowContours = new ArrayList<MatOfPoint>();
-			
-			Imgproc.findContours(satImg, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-			Imgproc.drawContours(satImg, contours, -1, new Scalar(255,255,0));
 			
 			Imgproc.findContours(yellowImg, yellowContours, yellowHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_TC89_KCOS);
 			Imgproc.drawContours(yellowImg, yellowContours, -1, new Scalar(255,255,0));
 			
-			if(contours.size() > 0)
-			{
-				left = new Point(Imgproc.boundingRect(contours.get(0)).x, Imgproc.boundingRect(contours.get(0)).y);
-				right = new Point(Imgproc.boundingRect(contours.get(0)).x, Imgproc.boundingRect(contours.get(0)).y);
-			}
 			if(yellowContours.size() > 0)
 			{
 				yellowLeft = new Point(Imgproc.boundingRect(yellowContours.get(0)).x, Imgproc.boundingRect(yellowContours.get(0)).y);
 				yellowRight = new Point(Imgproc.boundingRect(yellowContours.get(0)).x, Imgproc.boundingRect(yellowContours.get(0)).y);
 			}
-			
-			for(MatOfPoint point : contours)
-			{
-				Rect rectangle = Imgproc.boundingRect(point);
-				
-				//System.out.println("(" + rectangle.x + " " + rectangle.y + ")");
-				//Find farthest left and right corners of tote
-				if(rectangle.x < left.x)
-					left.x = rectangle.x;
-				if(rectangle.y < left.y)
-					left.y = rectangle.y;
-				
-				if((rectangle.x + rectangle.width) > right.x)
-					right.x = rectangle.x + rectangle.width;
-				if((rectangle.y + rectangle.height) > right.y)
-					right.y = rectangle.y + rectangle.height;
-				
-//				Core.rectangle(satImg, new Point(rectangle.x, rectangle.y),
-//						new Point(rectangle.x + rectangle.width, 
-//						rectangle.y + rectangle.height), new Scalar(255,255,0));
-			}
-			
+						
 			//Core.rectangle(satImg, left, right, new Scalar(255,255,0));
 			
 			for(MatOfPoint point : yellowContours)
@@ -215,7 +171,9 @@ public class NetworkTablesDesktopClient {
 //			right.x = (right.x + yellowRight.x) / 2;
 //			right.y = (right.y + yellowRight.y) / 2;
 			
-			
+			satImg = yellowImg;
+			left = yellowLeft;
+			right = yellowRight;
 			
 			Core.rectangle(satImg, left, right, new Scalar(255,255,0));
 			
@@ -280,12 +238,12 @@ public class NetworkTablesDesktopClient {
 
 	private void updateSliderValues() {
 		//Update values
-		HMIN = (int)(table.getNumber("HMIN"));
-		SMIN = (int)(table.getNumber("SMIN"));
-		VMIN = (int)(table.getNumber("VMIN"));
-		HMAX = (int)(table.getNumber("HMAX"));
-		SMAX = (int)(table.getNumber("SMAX"));
-		VMAX = (int)(table.getNumber("VMAX"));
+		B_HMIN = (int)(table.getNumber("HMIN"));
+		B_SMIN = (int)(table.getNumber("SMIN"));
+		B_VMIN = (int)(table.getNumber("VMIN"));
+		B_HMAX = (int)(table.getNumber("HMAX"));
+		B_SMAX = (int)(table.getNumber("SMAX"));
+		B_VMAX = (int)(table.getNumber("VMAX"));
 		
 	}
 
