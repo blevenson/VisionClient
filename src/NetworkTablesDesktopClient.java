@@ -225,10 +225,19 @@ public class NetworkTablesDesktopClient {
 			if((bigWidth / bigHeight) >= 2.3)
 			{
 				System.out.println("Recalculate Width");
+				//if the green didn't work, use the yellow
+				bigWidth = (Math.sqrt(Math.pow((yellowRight.x - yellowLeft.x), 2) + Math.pow((yellowLeft.y - yellowLeft.y), 2)));
 			}
 			//Check Height
-			else if((bigHeight / bigWidth) >= 0.55)
+			if((bigHeight / bigWidth) >= 0.55)
+			{
 				System.out.println("Recalculate Height");
+				bigHeight = (Math.sqrt(Math.pow((yellowLeft.x - yellowLeft.x), 2) + Math.pow((yellowRight.y - yellowLeft.y), 2)));
+			}
+			if((bigWidth / bigHeight) >= 2.3)
+				System.out.println("Width issue");
+			if((bigHeight / bigWidth) >= 0.55)
+				System.out.println("Height issue");
 			area = bigHeight * bigWidth;
 			System.out.println(bigHeight + " " + bigWidth);
 			
