@@ -129,6 +129,7 @@ public class PickUpShortSide {
 			
 			Imgproc.erode(yellowImg, yellowImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 			Imgproc.erode(yellowImg, yellowImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3,3)));
+			Imgproc.erode(yellowImg, yellowImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3,3)));
 			Imgproc.dilate(yellowImg, yellowImg, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 					
 			//Track image
