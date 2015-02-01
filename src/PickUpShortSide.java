@@ -24,6 +24,7 @@ import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.tables.TableKeyNotDefinedException;
 
 public class PickUpShortSide {
 
@@ -43,11 +44,15 @@ public class PickUpShortSide {
 	private Point left;
 	private Point right;
 	private Point bigCenter;
+	private Point leftDivider;
+	private Point rightDivider;
+	
 	private double oldArea;
 	private double area;
 	private double bigHeight = 0;
 	private double bigWidth = 0;
-	
+	private double centerWidth = 213;
+	private double setValue = 0;
 
 	private int picCount = 0;
 	//Box Tracer
@@ -61,7 +66,11 @@ public class PickUpShortSide {
 		private int B_VMAX = 255;
 	
 	private final boolean PRINT = false;
-
+	//Used with Ultrasonic to tell when to stop
+	private double kDistToPickUp = 600;
+	
+	//Distance starts at +1 so it doesn't end before connecting
+	private double distance = ++kDistToPickUp;
 	public static void main(String[] args) {
 		new PickUpShortSide().run();
 	}
@@ -78,6 +87,8 @@ public class PickUpShortSide {
 		right = new Point();
 		yellowLeft = new Point();
 		yellowRight = new Point();
+		leftDivider = new Point();
+		rightDivider = new Point();
 		bigCenter = new Point();
 		oldArea = 0;
 		area = 0;
@@ -111,6 +122,7 @@ public class PickUpShortSide {
 		table.putNumber("SMAX", B_SMAX);
 		table.putNumber("VMAX", B_VMAX);
 		
+		table.putNumber("distance", distance);
 		table.putBoolean("done", false);
 		done = (table.getBoolean("done"));
 
@@ -118,9 +130,19 @@ public class PickUpShortSide {
 		Mat satImg = new Mat();
 		Mat yellowImg = new Mat();
 		
+		leftDivider.y = 0;
+		
 		while (!done) {
-
+			try{
+				distance = table.getNumber("distance");
+			}catch(TableKeyNotDefinedException e)
+			{
+				System.out.println("I didn't get the distance");
+			}
+			
+			System.out.println("Distance: " + distance);
 			vid.read(img);
+			
 			
 			Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
 			
@@ -197,18 +219,19 @@ public class PickUpShortSide {
 			Core.circle(satImg, bigCenter, 10, new Scalar(255, 0, 0));
 			
 			//Chech center of tote
-			if(bigCenter.x > (satImg.width()/2))
+			if((bigCenter.x > (satImg.width()/2)) && (bigCenter.x < (satImg.width())))
 			{
-//				System.out.println("Right");
-				rightMotorC = -1;
-				leftMotorC = 1;
+				setValue = (1 / (satImg.width() - rightDivider.x)) * (bigCenter.x - rightDivider.x);
+				rightMotorC = -setValue;
+				leftMotorC = setValue;
 			}
-			else if(bigCenter.x < (satImg.width()/2))
+			else if((bigCenter.x < (satImg.width()/2)) && ( bigCenter.x > 0))
 			{
-//				System.out.println("Left");
-				rightMotorC = 1;
-				leftMotorC = -1;
+				setValue = (((1 / (leftDivider.x)) * (bigCenter.x))- 1);
+				rightMotorC = setValue;
+				leftMotorC = -(setValue);
 			}
+			
 			
 			//truncate values
 			area = (int)area / 1000;
@@ -224,14 +247,33 @@ public class PickUpShortSide {
 //			System.out.println("Old: " + oldArea + "  New Area: " + area);
 			oldArea = area;
 			
+			rightDivider.y = satImg.height();
+			leftDivider.x = ((satImg.width() / 2) - (centerWidth / 2));
+			rightDivider.x = ((satImg.width() / 2) + (centerWidth / 2));
+			
+			if((bigCenter.x <= rightDivider.x) && (bigCenter.x >= leftDivider.x))
+			{
+				if(bigCenter.x >= leftDivider.x && (bigCenter.x <= (satImg.width() / 2)))
+					setValue = (1 / ((satImg.width() / 2) - leftDivider.x)) * (bigCenter.x - leftDivider.x);
+				else if((bigCenter.x <= rightDivider.x) && (bigCenter.x >= (satImg.width() / 2)))
+					setValue = (((-1 / (rightDivider.x - (satImg.width() / 2))) * (bigCenter.x - (satImg.width() / 2))) + 1);
+				leftMotorC = setValue;
+				rightMotorC = setValue;
+			}
+			
+			Core.rectangle(satImg, leftDivider, rightDivider, new Scalar(255,255,0));
+			
 			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 
 			if(PRINT)savePics(img);
 			
 			updateSliderValues();
-
+			
+			if(distance < kDistToPickUp) done = true;
+			
 			table.putNumber("leftMotor", leftMotorC);
 			table.putNumber("rightMotor", rightMotorC);
+			table.putBoolean("done", done);
 			// System.out.println("Left: " + leftMotorC + " Right: " + rightMotorC);
 
 		}
