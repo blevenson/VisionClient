@@ -271,6 +271,9 @@ public class PickUpShortSide {
 			
 			if(distance < kDistToPickUp) done = true;
 			
+			//Recalculate values
+			centerWidth = ((540d / 4700d) * (distance - 300d)) + 100d;
+			
 			table.putNumber("leftMotor", leftMotorC);
 			table.putNumber("rightMotor", rightMotorC);
 			table.putBoolean("done", done);
