@@ -187,7 +187,7 @@ public class TrackMultiple {
 					yellowRight.y = rectangle.y + rectangle.height;
 			}
 			
-			Core.rectangle(yellowImg, yellowLeft, yellowRight, new Scalar(255,255,0));
+//			Core.rectangle(yellowImg, yellowLeft, yellowRight, new Scalar(255,255,0));
 			
 			//get average of box
 //			left.x = (left.x + yellowLeft.x) / 2;
@@ -262,7 +262,7 @@ public class TrackMultiple {
 				rightMotorC = setValue;
 			}
 			
-			Core.rectangle(satImg, leftDivider, rightDivider, new Scalar(255,255,0));
+			//Core.rectangle(satImg, leftDivider, rightDivider, new Scalar(255,255,0));
 			
 			lblimage.setIcon(new ImageIcon(toBufferedImage(satImg)));
 
