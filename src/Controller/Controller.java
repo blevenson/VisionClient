@@ -71,7 +71,7 @@ public class Controller {
 
         // Make connection and initialize streams
         String serverAddress = getServerAddress();
-        Socket socket = new Socket(serverAddress, 9004);
+        Socket socket = new Socket(serverAddress, 5801);
         in = new BufferedReader(new InputStreamReader(
             socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
