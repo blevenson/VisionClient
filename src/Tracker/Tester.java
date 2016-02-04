@@ -1,5 +1,6 @@
 package Tracker;
 
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -41,8 +42,8 @@ public class Tester {
 	
 	private final int PIXEL_WIDTH = 211;
 	//inches
-	private final int DISTANCE = 53;
-	private final int TAPE_WIDTH = 15;
+	private final int DISTANCE = 48;
+	private final int TAPE_WIDTH = 14;
 	private  final double FOCAL_LENGTH = (PIXEL_WIDTH * DISTANCE) / TAPE_WIDTH;
 		
 	//Track image
@@ -150,7 +151,8 @@ public class Tester {
 		for(Rect r : boundingRects)
 			if(r.contains(trackPoint)){
 				//System.out.println("distance: " + (TAPE_WIDTH * FOCAL_LENGTH) / r.width);
-				System.out.println("Angle: " + Math.atan((TAPE_WIDTH)/(TAPE_WIDTH * FOCAL_LENGTH) / r.width));
+				//System.out.println("Angle: " + Math.atan((TAPE_WIDTH)/(TAPE_WIDTH * FOCAL_LENGTH) / r.width));
+				//System.out.println("Angle: " + Math.toDegrees(2 * Math.atan((followPoint.y - trackPoint.y)/FOCAL_LENGTH)));
 			}
 				
 		
