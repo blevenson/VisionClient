@@ -42,8 +42,8 @@ public class Tester {
 	
 	private final int PIXEL_WIDTH = 211;
 	//inches
-	private final int DISTANCE = 48;
-	private final int TAPE_WIDTH = 14;
+	private final int DISTANCE = 49;
+	private final int TAPE_WIDTH = 9;
 	private  final double FOCAL_LENGTH = (PIXEL_WIDTH * DISTANCE) / TAPE_WIDTH;
 		
 	//Track image
