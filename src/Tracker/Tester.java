@@ -40,6 +40,7 @@ public class Tester {
 	private Mat binaryImage = new Mat();
 	private Mat img = new Mat(480,640, 16);
 	
+	private final int TRACK_MODE = 4;
 	private final int PIXEL_WIDTH = 211;
 	//inches
 	private final int DISTANCE = 49;
@@ -71,6 +72,7 @@ public class Tester {
 	private VideoCapture vid;
 	
 	private Point followPoint = new Point();
+	private Point largestCenter;
 	private AxisCamera cam; 
 	
 	public static void main(String[] args){
@@ -134,16 +136,36 @@ public class Tester {
 			boundingRects.add(Imgproc.boundingRect(point));
 		
 		for(Rect r : boundingRects){
-			if(r.width * r.height > biggestRect.height * biggestRect.width)
-				biggestRect = r;
-			
 			//Create the arraylist with the center points
 			centerPoints.add(new Point(r.x + r.width/2, r.y + r.height/2));
+			
+			if(r.width * r.height > biggestRect.height * biggestRect.width){
+				biggestRect = r;
+				largestCenter = centerPoints.get(centerPoints.size() - 1);
+			}
 		}
 
 		if(centerPoints.size() < 1)return;
-		followPoint.x = binaryImage.width()/2;
 		followPoint.y = binaryImage.height()/2;
+//		followPoint.x = binaryImage.width()/2;
+		if(TRACK_MODE == 4)
+			followPoint.x = binaryImage.width() / 2;
+		else if(centerPoints.size() == 1 || TRACK_MODE > 2 || contours.size() > 3)
+			followPoint.x = largestCenter.x;
+		else if(centerPoints.size() == 3){
+			switch(TRACK_MODE){
+				case 0:
+					followPoint.x = 0;
+					break;
+				case 1:
+					followPoint.x = binaryImage.width()/2;
+					break;
+				case 2:
+					followPoint.x = binaryImage.width();
+					break;
+			}
+		}
+		System.out.println(followPoint.x);
 		trackPoint = findClossestPoint(centerPoints, followPoint);
 		
 		Core.rectangle(img, new Point(trackPoint.x-10, trackPoint.y-10), new Point(trackPoint.x + 10, trackPoint.y + 10), new Scalar(255, 0, 100));
