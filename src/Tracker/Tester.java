@@ -3,6 +3,8 @@ package Tracker;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
@@ -41,10 +43,10 @@ public class Tester {
 	private Mat img = new Mat(480,640, 16);
 	
 	private final int TRACK_MODE = 4;
-	private final int PIXEL_WIDTH = 211;
+	private final int PIXEL_WIDTH = 351;
 	//inches
-	private final int DISTANCE = 49;
-	private final int TAPE_WIDTH = 9;
+	private final double DISTANCE = 45;
+	private final double TAPE_WIDTH = 20.5;
 	private  final double FOCAL_LENGTH = (PIXEL_WIDTH * DISTANCE) / TAPE_WIDTH;
 		
 	//Track image
@@ -75,6 +77,8 @@ public class Tester {
 	private Point largestCenter;
 	private AxisCamera cam; 
 	
+	private boolean takePhoto;
+	
 	public static void main(String[] args){
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		
@@ -96,15 +100,24 @@ public class Tester {
 			img = cam.getImage();
 		
 		// Display Setup. For Testing
-		JFrame frame2 = new JFrame();
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		lblimage = new JLabel(new ImageIcon(toBufferedImage(img)));
 		lblimage.setIcon(new ImageIcon(toBufferedImage(img)));
 		
 		JPanel mainPanel = new JPanel(new GridLayout());
 		mainPanel.add(lblimage);
+		
+		takePhoto = false;
+		mainPanel.addMouseListener(new MouseListener(){
+			public void mouseClicked(MouseEvent e) {}
+			public void mousePressed(MouseEvent e) {
+				takePhoto = true;
+			}
+			public void mouseReleased(MouseEvent e) {}
+			public void mouseEntered(MouseEvent e) {}
+			public void mouseExited(MouseEvent e) {}
+		});
 		
 		frame.setSize(500, 500);
 		frame.add(mainPanel);
@@ -113,19 +126,24 @@ public class Tester {
 
 	protected void execute() {
 		img = cam.getImage();
-		
+
 		if (img.empty()) return;
 		
 		Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
+		
+		if(takePhoto){
+			savePics(img);
+			takePhoto = false;
+		}
 		
 		//Real Values
 		Core.inRange(hsv, new Scalar(B_HMIN, B_SMIN, B_VMIN), new Scalar(B_HMAX, B_SMAX, B_VMAX), binaryImage);
 		
 		Imgproc.erode(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 		Imgproc.dilate(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
+		Imgproc.drawContours(img, contours, -1, new Scalar(0,0,255));
 				
 		Imgproc.findContours(binaryImage, contours, greenHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_TC89_KCOS);
-		Imgproc.drawContours(img, contours, -1, new Scalar(0,0,255));
 		
 		if(contours.size() == 0){
 			System.out.println("No Conters");
@@ -165,21 +183,21 @@ public class Tester {
 					break;
 			}
 		}
-		System.out.println(followPoint.x);
 		trackPoint = findClossestPoint(centerPoints, followPoint);
 		
 		Core.rectangle(img, new Point(trackPoint.x-10, trackPoint.y-10), new Point(trackPoint.x + 10, trackPoint.y + 10), new Scalar(255, 0, 100));
 		
-		for(Rect r : boundingRects)
+		for(Rect r : boundingRects){
 			if(r.contains(trackPoint)){
-				//System.out.println("distance: " + (TAPE_WIDTH * FOCAL_LENGTH) / r.width);
+				Core.putText(img, "distance: " + (TAPE_WIDTH * FOCAL_LENGTH) / r.width, new Point(10, 20), 1, 1, new Scalar(0, 255, 255));
+//				System.out.println("distance: " + (TAPE_WIDTH * FOCAL_LENGTH) / r.width);s
 				//System.out.println("Angle: " + Math.atan((TAPE_WIDTH)/(TAPE_WIDTH * FOCAL_LENGTH) / r.width));
 				//System.out.println("Angle: " + Math.toDegrees(2 * Math.atan((followPoint.y - trackPoint.y)/FOCAL_LENGTH)));
 			}
+		}
 				
 		
 		//System.out.println("xErr: " + (binaryImage.width()/2 - trackPoint.x) + " yErr: " + (binaryImage.height()/2 - trackPoint.y));
-
 		lblimage.setIcon(new ImageIcon(toBufferedImage(img)));
 		
 		//Cleanup
@@ -226,15 +244,15 @@ public class Tester {
 	}
 	
 	public void savePics(Mat img) {
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException ex) {
-			System.out.println("0 noses.....I 2 tyd to swep");
-		}
+//		try {
+//			Thread.sleep(1000);
+//		} catch (InterruptedException ex) {
+//			System.out.println("0 noses.....I 2 tyd to swep");
+//		}
 		// change address for your computers
-		Highgui.imwrite("C://Users/Student/ImagePics/filteredBox_" + picCount + ".jpeg", img);
+		Highgui.imwrite("C://Users/Student/ImagePics/img_" + picCount + ".jpeg", img);
 		picCount++;
 		
-		System.out.println("Looping: " + picCount);
+		System.out.println("Saving: " + picCount);
 	}
 }
