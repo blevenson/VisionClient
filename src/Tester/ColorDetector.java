@@ -42,7 +42,7 @@ public class ColorDetector implements Runnable {
 	public void run(){
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         
-        cam = new AxisCamera("169.254.2.2");
+        cam = new AxisCamera("10.7.66.11");
       
 		VideoCapture vid = new VideoCapture(0);
 		

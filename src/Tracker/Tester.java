@@ -92,7 +92,7 @@ public class Tester {
 	protected void initialize(){
 //		vid = new VideoCapture(0);
 //		vid.read(img);
-		cam = new AxisCamera("169.254.2.2");
+		cam = new AxisCamera("10.7.66.11");
 		
 		img = cam.getImage();
 		
