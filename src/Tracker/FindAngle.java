@@ -39,6 +39,9 @@ public class FindAngle {
 	public final double CENTER_X = 640;
 	public final double CENTER_Y = 360;
 	
+	private final int CANNY_THREH = 57;//50;
+	private final int CENTER_THREH = 49;//85;
+	
 	private VideoCapture vid;
 	
 	//Images
@@ -53,13 +56,13 @@ public class FindAngle {
 	
 	//Color detection
 	//min
-	public int B_HMIN = 90;
-	private int B_SMIN = 183;
-	private int B_VMIN = 105;
+	public int B_HMIN = 82;//90;
+	private int B_SMIN = 161;//183;
+	private int B_VMIN = 71;//105;
 	//Max
-	private int B_HMAX = 142;
+	private int B_HMAX = 120;//142;
 	private int B_SMAX = 255;
-	private int B_VMAX = 190;
+	private int B_VMAX = 154;//190;
 	
 	public static void main(String[] args){
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -124,6 +127,10 @@ public class FindAngle {
 		//Display angle to turn robot
 		Core.putText(img, "Angle: " + Math.toDegrees(convertPointToAngle(centerPoint)), new Point(10, 40), 1, 1, new Scalar(0, 255, 255));
 		
+		//Find circles in image
+		Mat circles = findCircles(binaryImage);
+		addCircleToImage(circles, img);
+		
 		//Display image
 		lblimage.setIcon(new ImageIcon(toBufferedImage(img)));
 		
@@ -139,11 +146,12 @@ public class FindAngle {
 		//Real Values
 		Core.inRange(hsv, new Scalar(B_HMIN, B_SMIN, B_VMIN), new Scalar(B_HMAX, B_SMAX, B_VMAX), binaryImage);
 		
+		//Blur image to make smoother
 		Imgproc.erode(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 		Imgproc.dilate(binaryImage, binaryImage, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
-		Imgproc.drawContours(img, contours, -1, new Scalar(0,0,255));
 				
 		Imgproc.findContours(binaryImage, contours, greenHierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_TC89_KCOS);
+		//Imgproc.drawContours(img, contours, -1, new Scalar(0,0,255));
 	}
 	
 	//Finds average center of rectangles
@@ -211,5 +219,28 @@ public class FindAngle {
 				.getDataBuffer()).getData();
 		System.arraycopy(b, 0, targetPixels, 0, b.length);
 		return image;
+	}
+	
+	private void addCircleToImage(Mat circles, Mat outputImage){
+		for (int i = 0; i < circles.cols(); i++) {
+			Point center = new Point(Math.round(circles.get(0, i)[0]),
+					Math.round(circles.get(0, i)[1]));
+			int radius = (int) Math.round(circles.get(0, i)[2]);
+			// circle center
+			Core.circle(outputImage, center, 3, new Scalar(0, 255, 0), -1, 8, 0);
+			// circle outline
+			Core.circle(outputImage, center, radius, new Scalar(0, 0, 255), 3, 8, 0);
+		}
+	}
+	
+	private Mat findCircles(Mat gray){
+		// Blur image to reduce noise
+		Imgproc.GaussianBlur(gray, gray, new Size(9, 9), 2, 2);
+
+		Mat circles = new Mat();
+		// Find circles
+		Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 1,
+						gray.rows() / 8, CANNY_THREH, CENTER_THREH, 0, 0);
+		return circles;
 	}
 }

@@ -39,6 +39,8 @@ public class ColorDetector implements Runnable {
 	
 	private AxisCamera cam;
 	
+	private static final boolean USING_AXIS_CAMERA = false;
+	
 	public void run(){
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         
@@ -138,7 +140,10 @@ public class ColorDetector implements Runnable {
 		Mat yellowImg = new Mat();
         
 		while(true){
-			img = cam.getImage();
+			if(USING_AXIS_CAMERA)
+				img = cam.getImage();
+			else
+				vid.read(img);
 			if(img.empty())continue;
 			
 			System.out.println(img.type());
