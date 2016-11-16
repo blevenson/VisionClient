@@ -168,7 +168,7 @@ public class FindAngle {
 		double dot = dotProduct(pixel, center);
 		
 		//Find angle between vectors using dot product
-		return Math.acos(dot/(magnitudeVector(pixel) * magnitudeVector(center)));
+		return ((point.x > CENTER_X)? 1 : -1) * Math.acos(dot/(magnitudeVector(pixel) * magnitudeVector(center)));
 	}
 	
 	// A*B = Ax*Bx + Ay*By + Az*Bz + ...
@@ -182,6 +182,7 @@ public class FindAngle {
 		for(int i = 0; i < a.length; i++){
 			total += a[i] * b[i];
 		}
+		
 		return total;
 	}
 	
