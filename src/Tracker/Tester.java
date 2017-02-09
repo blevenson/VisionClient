@@ -95,7 +95,7 @@ public class Tester {
 		cam = new AxisCamera("10.7.66.11");
 		
 		img = cam.getImage();
-		
+	
 		while(img.empty())
 			img = cam.getImage();
 		
@@ -126,7 +126,7 @@ public class Tester {
 
 	protected void execute() {
 		img = cam.getImage();
-
+		
 		if (img.empty()) return;
 		
 		Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);

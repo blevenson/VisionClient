@@ -7,13 +7,19 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
 public class CascadeTester {
 	public void run() {
 		CascadeClassifier faceDetector = new CascadeClassifier("C://Users/Student/ImagePics/classifer/cascade.xml");
+//		CascadeClassifier faceDetector = new CascadeClassifier("C://Users/Student/ImagePics/data/cascade.xml");
+//		CascadeClassifier faceDetector = new CascadeClassifier("C://Users/Student/ImagePics/data2/cascade.xml");
+		
 		Mat image = Highgui.imread("C://Users/Student/ImagePics/2016/img_1.jpeg");
-
+		
+		Imgproc.cvtColor(image, image, Imgproc.COLOR_RGB2GRAY);
+		
 		MatOfRect faceDetections = new MatOfRect();
 		faceDetector.detectMultiScale(image, faceDetections);
 
