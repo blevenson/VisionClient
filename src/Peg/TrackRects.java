@@ -39,6 +39,10 @@ public class TrackRects implements Runnable{
 	private final int LOW_THRESHOLD = 3;
 	private final double MAGNITUDE_THRESH = 0.5;
 	
+	private final double FOCAL_LENGTH = 1892.8;//2.8; //pixels
+	private final double CENTER_X = 320;
+	private final double CENTER_Y = 240;
+	
 	public static void main(String[] args){
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		
@@ -161,14 +165,23 @@ public class TrackRects implements Runnable{
 		
 		Core.inRange(output, new Scalar(hueMin, satMin, valueMin), new Scalar(hueMax, satMax, valueMax), output);
 		
-		Mat display = output.clone();
-		
 		Imgproc.blur(output, output, new Size(3,3));
 		
 		Imgproc.Canny(output, output, 100d, 300d);
 		
+		Mat display = output.clone();
+		
 		Mat lines = new Mat();
-		Imgproc.HoughLines(output, lines, 1, Math.PI/180, 10);
+		Imgproc.HoughLines(output, lines, 10, Math.PI/20, 10, 100, 2000);
+		
+		//Display Hough Lines
+		Mat cardLines = new Mat();
+		Imgproc.HoughLinesP(output, cardLines, 10, Math.PI/20, 10, 100, 2000);
+
+		for(int i = 0; i < cardLines.cols(); i++){
+			System.out.println(Arrays.toString(cardLines.get(0, i)));
+			Core.line(display, new Point(cardLines.get(0, i)[0], cardLines.get(0, i)[1]), new Point(cardLines.get(0, i)[2], cardLines.get(0, i)[3]), new Scalar(0, 255, 255));
+		}
 		
 		ArrayList<Mat> splitChannels = new ArrayList<Mat>();
 		Core.split(lines, splitChannels);
@@ -176,9 +189,11 @@ public class TrackRects implements Runnable{
 		Mat angles = splitChannels.get(1);
 		
 		//Calculate gradient field
-		int[] histogram = new int[360];
+		int[] histogram = new int[90];
 		for(int i = 0; i < angles.rows(); i++){
-			histogram[(int)(angles.get(i, 0)[0]*180/Math.PI)]++; 
+			int ang = (int)(angles.get(i, 0)[0]*180/Math.PI);
+			if(Math.abs(ang) <= 45)
+				histogram[ang + 45]++; 
 		}
 		
 		int max = histogram[0];
@@ -189,9 +204,11 @@ public class TrackRects implements Runnable{
 				angle = i;
 			}
 		}
+		//Account for neg numbers in the array
+		angle -= 45;
 		
 		System.out.println("Angle: " + angle);
-		
+				
 //		printMat(lines);
 //		System.out.println(lines.toString());
 		
@@ -236,86 +253,55 @@ public class TrackRects implements Runnable{
 		for(double x : mainPoints){
 			Core.line(output, new Point(x, 0), new Point(x, output.height()), new Scalar(255, 255, 255));
 		}
+		if(!contains(mainPoints, 0)){
+			Point centerPoint = new Point(mainPoints[0] + (mainPoints[3] - mainPoints[0])/2.0, CENTER_Y);
+			Core.circle(output, centerPoint, 5, new Scalar(255,255,255));
+			Core.putText(output, "Angle: " + Math.toDegrees(convertPointToAngle(centerPoint)), new Point(10, 40), 1, 1, new Scalar(255, 255, 255));
+		}
+		return output;
+	}
+	
+	private boolean contains(double[] array, double value){
+		for(double x : array){
+			if(value == x)
+				return true;
+		}
+		return false;
+	}
+	
+	//Convert pixel point on screen, to heading error
+	public double convertPointToAngle(Point point){
+			double[] pixel = {point.x - CENTER_X, point.y - CENTER_Y, FOCAL_LENGTH};
+			double[] center = {0, 0, FOCAL_LENGTH};
+			
+			double dot = dotProduct(pixel, center);
+			
+			//Find angle between vectors using dot product
+			return ((point.x > CENTER_X)? 1 : -1) * Math.acos(dot/(magnitudeVector(pixel) * magnitudeVector(center)));
+	}
+	
+	private double magnitudeVector(double[] vector){
+		double total = 0;
 		
-				
-		/*
-		//Horizontal Edge detector
-		double[] horSums = new double[horiz.width()];
-		
-		for(int i = 0; i < horiz.width(); i++){
-			for(int j = 0; j < horiz.height(); j++){
-				horSums[i] += horiz.get(j, i)[0]/255.0;
-			}
+		for(double d : vector){
+			total += Math.pow(d, 2);
 		}
 		
-		//Rotate image 90 degrees
-		Point src_center = new Point(vertical.cols()/2.0F, vertical.rows()/2.0F);
-		Mat rot_mat = Imgproc.getRotationMatrix2D(src_center, 90, 1.0);
-		Imgproc.warpAffine(output, vertical, rot_mat, vertical.size());
-		
-		//Find vertical edges
-		double[] vertSums = new double[vertical.width()];
-		
-		for(int i = 0; i < vertical.width(); i++){
-			for(int j = 0; j < vertical.height(); j++){
-				vertSums[i] += vertical.get(j, i)[0]/255.0;
-			}
-		}
-//		System.out.println(Arrays.toString(horSums));
-//		System.out.println(Arrays.toString(vertSums));
-		
-		
-		//Calculate gradient field
-		int[] histogram = new int[360];
-		for(int i = 0; i < horSums.length; i++){
-			for(int j = 0; j < vertSums.length; j++){
-				//Make sure value isn't zero
-				if(Math.sqrt(Math.pow(horSums[i], 2) + Math.pow(vertSums[i], 2)) > MAGNITUDE_THRESH)
-					histogram[(int)Math.toDegrees(Math.atan2(vertSums[i], horSums[j]))]++;
-			}
+		return Math.sqrt(total);
+	}
+	
+	private double dotProduct(double[] a, double[] b){
+	    if(a.length != b.length){
+	    	System.out.println("Error: vectors must be the same dimension");
+	    	return 0;
+	    }
+	
+		double total = 0;
+		for(int i = 0; i < a.length; i++){
+			total += a[i] * b[i];
 		}
 		
-		int max = histogram[0];
-		int angle = 0;
-		for(int i = 0; i < histogram.length; i++){
-			if(histogram[i] > max){
-				max = histogram[i];
-				angle = i;
-			}
-		}
-//		System.out.println(Arrays.toString(histogram));
-		
-		System.out.println("Angle: " + angle);
-		
-//		double[] mainPoints = new double[4];
-//		int index = 0;
-//		boolean droppedBelowThresh = true;
-//		//Find left most number
-//		for(int i = 0; i < sums.length; i++){
-//			if(sums[i] > SUM_THRESHOLD){
-//				if(droppedBelowThresh){
-//					if(index > 3){
-//						System.out.println("More than 4 important points found!");
-//						continue;
-//					}
-//					
-//					mainPoints[index] = i;
-//					index++;
-//					
-//					droppedBelowThresh = false;
-//				}
-//			}else{
-//				droppedBelowThresh = true;
-//			}
-//		}
-//		
-//		System.out.println(Arrays.toString(mainPoints));
-//		for(double x : mainPoints){
-//			Core.line(output, new Point(x, 0), new Point(x, output.height()), new Scalar(255, 255, 255));
-//		}
-		
-		*/
-		return display;
+		return total;
 	}
 	
 	private void printMat(Mat input){
