@@ -17,7 +17,6 @@ import javax.swing.event.ChangeListener;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
-import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
 import org.opencv.imgproc.Imgproc;
 
@@ -50,6 +49,7 @@ public class ColorDetector implements Runnable {
 		
 		Mat img = new Mat();
 		vid.read(img);
+//		img = Highgui.imread("C:/Users/Student/Downloads/GearVisionTarget/untitled8.png",1);
 		
 		
 		JFrame frame = new JFrame();
@@ -139,6 +139,7 @@ public class ColorDetector implements Runnable {
 		Mat hsv = new Mat();
 		Mat yellowImg = new Mat();
         
+//		Imgproc.cvtColor(img, hsv, Imgproc.COLOR_BGR2HSV);
 		while(true){
 			if(USING_AXIS_CAMERA)
 				img = cam.getImage();
