@@ -17,8 +17,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
@@ -26,7 +30,7 @@ import org.opencv.imgproc.Imgproc;
 
 public class TrackRects implements Runnable{
 	
-	private final String folderDirect = "C:/Users/Student/Downloads/GearVisionTarget";
+	private final String folderDirect = "/Users/Blevenson/Desktop/Robotics/Vision/GearVisionTarget";
 	
 	private int hueMin = 38;//53;
 	private int satMin = 92;
@@ -57,7 +61,7 @@ public class TrackRects implements Runnable{
 	private int x = 0,
 				y = 0;
 	public void run(){
-		img = Highgui.imread(folderDirect + "/untitled1.png");
+		img = Highgui.imread(folderDirect + "/untitled.png");
 		
 		// Display Setup. For Testing
 		JFrame frame = new JFrame();
@@ -232,7 +236,22 @@ public class TrackRects implements Runnable{
 		}
 //		System.out.println(Arrays.toString(sums));
 		
+		ArrayList<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+		Mat hierarchy = new Mat();
+		Imgproc.findContours(output, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.drawContours(display, contours, -1, new Scalar(0, 255, 0));
 		
+		MatOfPoint2f[] contours_poly = new MatOfPoint2f[contours.size()];
+		for(int i = 0; i < contours_poly.length; i++){
+			contours_poly[i] = new MatOfPoint2f();
+		}
+		Rect[] boundRect = new Rect[contours.size()];
+		
+		for( int i = 0; i < contours.size(); i++ ){
+			Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contours_poly[i], 3.0, true);
+			boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contours_poly[i].toArray()));
+			Core.rectangle(display, boundRect[i].tl(), boundRect[i].br(), new Scalar(0, 255, 0), 2, 8, 0 );
+	    }
 		
 		double[] mainPoints = new double[4];
 		int index = 0;
