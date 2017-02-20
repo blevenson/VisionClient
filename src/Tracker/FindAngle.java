@@ -45,7 +45,7 @@ public class FindAngle {
 	private VideoCapture vid;
 	
 	//Images
-	private Mat img = new Mat(480,640, 16);
+	private Mat img = new Mat();//new Mat(480,640, 16);
 	private Mat hsv = new Mat();
 	private Mat binaryImage = new Mat();
 	
@@ -56,13 +56,13 @@ public class FindAngle {
 	
 	//Color detection
 	//min
-	public int B_HMIN = 82;//90;
-	private int B_SMIN = 161;//183;
-	private int B_VMIN = 71;//105;
+	public int B_HMIN = 23;//82;//90;
+	private int B_SMIN = 70;//161;//183;
+	private int B_VMIN = 117;//71;//105;
 	//Max
-	private int B_HMAX = 120;//142;
-	private int B_SMAX = 255;
-	private int B_VMAX = 154;//190;
+	private int B_HMAX = 52;//120;//142;
+	private int B_SMAX = 202;//255;
+	private int B_VMAX = 255;//154;//190;
 	
 	public static void main(String[] args){
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);

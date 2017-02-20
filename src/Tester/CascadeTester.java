@@ -33,6 +33,8 @@ public class CascadeTester 	{
 		CascadeClassifier faceDetector = new CascadeClassifier("/Users/Blevenson/Desktop/Robotics/ImageProcessing/classifier_real_335/classifier_real_335/cascade.xml");
 		Mat image = Highgui.imread("/Users/Blevenson/Desktop/Robotics/ImageProcessing/2016/positive/30.jpeg");
 		
+//		Imgproc.cvtColor(image, image, Imgproc.COLOR_RGB2GRAY);
+		
 		JLabel lblimage = new JLabel(new ImageIcon(toBufferedImage(image)));
 		lblimage.setIcon(new ImageIcon(toBufferedImage(image)));
 		JPanel mainPanel = new JPanel(new GridLayout());
