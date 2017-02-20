@@ -30,7 +30,7 @@ import org.opencv.imgproc.Imgproc;
 
 public class TrackRects implements Runnable{
 	
-	private final String folderDirect = "/Users/Blevenson/Desktop/Robotics/Vision/GearVisionTarget";
+	private final String folderDirect = "2017";
 	
 	private int hueMin = 38;//53;
 	private int satMin = 92;
