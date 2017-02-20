@@ -170,42 +170,44 @@ public class TrackRects implements Runnable{
 		Imgproc.Canny(output, output, 100d, 300d);
 		
 		Mat display = output.clone();
-		
-		Mat lines = new Mat();
-		Imgproc.HoughLines(output, lines, 10, Math.PI/20, 10, 100, 2000);
+		Imgproc.cvtColor(display, display, Imgproc.COLOR_GRAY2BGR);
 		
 		//Display Hough Lines
 		Mat cardLines = new Mat();
-		Imgproc.HoughLinesP(output, cardLines, 10, Math.PI/20, 10, 100, 2000);
+		Imgproc.HoughLinesP(output, cardLines, 1, Math.PI/90, 10, 5, 20);
 
 		for(int i = 0; i < cardLines.cols(); i++){
-			System.out.println(Arrays.toString(cardLines.get(0, i)));
+//			System.out.println(Arrays.toString(cardLines.get(0, i)));
 			Core.line(display, new Point(cardLines.get(0, i)[0], cardLines.get(0, i)[1]), new Point(cardLines.get(0, i)[2], cardLines.get(0, i)[3]), new Scalar(0, 255, 255));
 		}
 		
-		ArrayList<Mat> splitChannels = new ArrayList<Mat>();
-		Core.split(lines, splitChannels);
+		double[] angles = new double[cardLines.cols()];
 		
-		Mat angles = splitChannels.get(1);
-		
+		for(int i = 0; i < cardLines.cols(); i++){
+			angles[i] = Math.atan2(cardLines.get(0, i)[3] - cardLines.get(0, i)[1], cardLines.get(0, i)[2] - cardLines.get(0, i)[0]);
+		}
+				
 		//Calculate gradient field
 		int[] histogram = new int[90];
-		for(int i = 0; i < angles.rows(); i++){
-			int ang = (int)(angles.get(i, 0)[0]*180/Math.PI);
-			if(Math.abs(ang) <= 45)
-				histogram[ang + 45]++; 
+				
+		for(int i = 0; i < angles.length; i++){
+			int ang = (int)(angles[i]*180/Math.PI);
+			int bucket = (ang + 360) % 90;
+				histogram[bucket]++; 
 		}
 		
 		int max = histogram[0];
 		int angle = 0;
 		for(int i = 0; i < histogram.length; i++){
+			//System.out.println(i + " " + histogram[i]);
 			if(histogram[i] > max){
 				max = histogram[i];
 				angle = i;
 			}
 		}
 		//Account for neg numbers in the array
-		angle -= 45;
+		if (angle > 45)
+			angle -= 90;
 		
 		System.out.println("Angle: " + angle);
 				
@@ -217,6 +219,9 @@ public class TrackRects implements Runnable{
 		Mat rot_mat = Imgproc.getRotationMatrix2D(src_center, angle, 1.0);
 		Imgproc.warpAffine(output, output, rot_mat, output.size());
 		
+		//Rotate display image
+		Imgproc.warpAffine(display, display, rot_mat, output.size());
+		
 
 		double[] sums = new double[output.width()];
 		
@@ -226,6 +231,8 @@ public class TrackRects implements Runnable{
 			}
 		}
 //		System.out.println(Arrays.toString(sums));
+		
+		
 		
 		double[] mainPoints = new double[4];
 		int index = 0;
@@ -251,14 +258,14 @@ public class TrackRects implements Runnable{
 		
 		System.out.println(Arrays.toString(mainPoints));
 		for(double x : mainPoints){
-			Core.line(output, new Point(x, 0), new Point(x, output.height()), new Scalar(255, 255, 255));
+			Core.line(display, new Point(x, 0), new Point(x, output.height()), new Scalar(255, 255, 0));
 		}
 		if(!contains(mainPoints, 0)){
 			Point centerPoint = new Point(mainPoints[0] + (mainPoints[3] - mainPoints[0])/2.0, CENTER_Y);
 			Core.circle(output, centerPoint, 5, new Scalar(255,255,255));
 			Core.putText(output, "Angle: " + Math.toDegrees(convertPointToAngle(centerPoint)), new Point(10, 40), 1, 1, new Scalar(255, 255, 255));
 		}
-		return output;
+		return display;
 	}
 	
 	private boolean contains(double[] array, double value){
