@@ -247,11 +247,23 @@ public class TrackRects implements Runnable{
 		}
 		Rect[] boundRect = new Rect[contours.size()];
 		
+		//Important boundingRects
+		Rect[] imporRects = new Rect[3];
+		int maxIndex = 0;
+		
 		for( int i = 0; i < contours.size(); i++ ){
 			Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contours_poly[i], 3.0, true);
 			boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contours_poly[i].toArray()));
+			if(boundRect[i].area() > imporRects[0].area()){
+				imporRects[0] = boundRect[i];
+				maxIndex = i;
+			}
 			Core.rectangle(display, boundRect[i].tl(), boundRect[i].br(), new Scalar(0, 255, 0), 2, 8, 0 );
 	    }
+		//Remove max rectangle
+		boundRect[maxIndex] = null;
+		
+		
 		
 		double[] mainPoints = new double[4];
 		int index = 0;
@@ -280,9 +292,9 @@ public class TrackRects implements Runnable{
 			Core.line(display, new Point(x, 0), new Point(x, output.height()), new Scalar(255, 255, 0));
 		}
 		if(!contains(mainPoints, 0)){
-			Point centerPoint = new Point(mainPoints[0] + (mainPoints[3] - mainPoints[0])/2.0, CENTER_Y);
-			Core.circle(output, centerPoint, 5, new Scalar(255,255,255));
-			Core.putText(output, "Angle: " + Math.toDegrees(convertPointToAngle(centerPoint)), new Point(10, 40), 1, 1, new Scalar(255, 255, 255));
+			Point centerPoint = new Point((mainPoints[3] + mainPoints[0])/2.0, CENTER_Y);
+			Core.circle(display, centerPoint, 5, new Scalar(255,255,255));
+			Core.putText(display, "Angle: " + Math.toDegrees(convertPointToAngle(centerPoint)), new Point(10, 40), 1, 1, new Scalar(255, 255, 255));
 		}
 		return display;
 	}
