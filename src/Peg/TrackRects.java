@@ -42,6 +42,7 @@ public class TrackRects implements Runnable{
 	private final int SUM_THRESHOLD = 8;
 	private final int LOW_THRESHOLD = 3;
 	private final double MAGNITUDE_THRESH = 0.5;
+	private final double SimularityThresh = 5;
 	
 	private final double FOCAL_LENGTH = 1892.8;//2.8; //pixels
 	private final double CENTER_X = 320;
@@ -246,53 +247,63 @@ public class TrackRects implements Runnable{
 			contours_poly[i] = new MatOfPoint2f();
 		}
 		Rect[] boundRect = new Rect[contours.size()];
+		for(int i = 0; i < boundRect.length; i++){
+			boundRect[i] = new Rect();
+		}
 		
 		//Important boundingRects
 		Rect[] imporRects = new Rect[3];
 		int maxIndex = 0;
+		imporRects[maxIndex] = new Rect(0,0,0,0);
 		
-		for( int i = 0; i < contours.size(); i++ ){
+		for(int i = 0; i < contours.size(); i++ ){
 			Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contours_poly[i], 3.0, true);
 			boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contours_poly[i].toArray()));
-			if(boundRect[i].area() > imporRects[0].area()){
-				imporRects[0] = boundRect[i];
-				maxIndex = i;
-			}
+//			if(boundRect[i].area() > imporRects[0].area()){
+//				imporRects[0] = boundRect[i];
+//				maxIndex = i;
+//			}
 			Core.rectangle(display, boundRect[i].tl(), boundRect[i].br(), new Scalar(0, 255, 0), 2, 8, 0 );
-	    }
-		//Remove max rectangle
-		boundRect[maxIndex] = null;
+	    }		
 		
 		
-		
-		double[] mainPoints = new double[4];
-		int index = 0;
-		boolean droppedBelowThresh = true;
-		//Find left most number
-		for(int i = 0; i < sums.length; i++){
-			if(sums[i] > SUM_THRESHOLD){
-				if(droppedBelowThresh){
-					if(index > 3){
-						System.out.println("More than 4 important points found!");
-						continue;
-					}
-					
-					mainPoints[index] = i;
-					index++;
-					
-					droppedBelowThresh = false;
-				}
-			}else if(sums[i] < LOW_THRESHOLD){
-				droppedBelowThresh = true;
+		//Remove duplicates
+		for(int i = 0; i < boundRect.length; i++){
+			for(int j = 0; j < boundRect.length; j++){
+				if(i == j || boundRect[i] == null || boundRect[j] == null)
+					continue;
+				if(Math.abs(boundRect[i].height - boundRect[j].height) < SimularityThresh &&
+						Math.abs(boundRect[i].x - boundRect[j].x) < SimularityThresh)
+					boundRect[j] = null;
 			}
+			
 		}
 		
-		System.out.println(Arrays.toString(mainPoints));
-		for(double x : mainPoints){
-			Core.line(display, new Point(x, 0), new Point(x, output.height()), new Scalar(255, 255, 0));
+		//Remove 3 max rectangles and add to impor Rects
+		for(int i = 0; i < imporRects.length; i++){
+//			System.out.println("Bound: " + Arrays.toString(boundRect));
+			int indexWithMax = findMaxRectIndex(boundRect);
+			if(indexWithMax < 0){
+				continue;
+			}
+			imporRects[i] = boundRect[indexWithMax];
+			boundRect[indexWithMax] = null;
 		}
-		if(!contains(mainPoints, 0)){
-			Point centerPoint = new Point((mainPoints[3] + mainPoints[0])/2.0, CENTER_Y);
+				
+		for(Rect r : imporRects){
+			if(r == null)
+				continue;
+			Core.rectangle(display, r.tl(), r.br(), new Scalar(0, 0, 255), 2, 8, 0 );
+		}
+		
+		//Check if it should have 3 rects or just 2
+		
+		
+		
+		System.out.println("Important: " + Arrays.toString(imporRects));
+		
+		if(imporRects[0] != null && imporRects[1] != null){
+			Point centerPoint = new Point((imporRects[0].x + imporRects[0].width/2.0  + imporRects[1].x + imporRects[1].width/2.0)/2.0, CENTER_Y);
 			Core.circle(display, centerPoint, 5, new Scalar(255,255,255));
 			Core.putText(display, "Angle: " + Math.toDegrees(convertPointToAngle(centerPoint)), new Point(10, 40), 1, 1, new Scalar(255, 255, 255));
 		}
@@ -340,6 +351,25 @@ public class TrackRects implements Runnable{
 		}
 		
 		return total;
+	}
+	
+	private int findMaxRectIndex(Rect[] rectangles){
+		int maxIndex = 0;
+		while(maxIndex < rectangles.length - 1 && rectangles[maxIndex] == null){
+			maxIndex++;
+		}
+		if(rectangles[maxIndex] == null)
+			return -1;
+		double maxArea = rectangles[maxIndex].area();
+		for(int i = maxIndex; i < rectangles.length; i++){
+			if(rectangles[i] == null)
+				continue;
+			if(rectangles[i].area() > maxArea){
+				maxArea = rectangles[i].area();
+				maxIndex = i;
+			}
+		}
+		return maxIndex;
 	}
 	
 	private void printMat(Mat input){
