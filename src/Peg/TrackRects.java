@@ -44,7 +44,9 @@ public class TrackRects implements Runnable{
 	private final int LOW_THRESHOLD = 3;
 	private final double MAGNITUDE_THRESH = 0.5;
 	private final double SimularityThresh = 5;
+	private final double AreaSimularityThresh = 0.25;
 	private final double WIDTH_THRESH = 0.7;
+	private final double X_OFFSET_THRESH = 10;
 	
 	private final double FOCAL_LENGTH = 1892.8;//2.8; //pixels
 	private final double CENTER_X = 320;
@@ -261,13 +263,8 @@ public class TrackRects implements Runnable{
 		for(int i = 0; i < contours.size(); i++ ){
 			Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), contours_poly[i], 3.0, true);
 			boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contours_poly[i].toArray()));
-//			if(boundRect[i].area() > imporRects[0].area()){
-//				imporRects[0] = boundRect[i];
-//				maxIndex = i;
-//			}
 			Core.rectangle(display, boundRect[i].tl(), boundRect[i].br(), new Scalar(0, 255, 0), 2, 8, 0 );
 	    }		
-		
 		
 		//Remove duplicates
 		for(int i = 0; i < boundRect.length; i++){
@@ -287,30 +284,80 @@ public class TrackRects implements Runnable{
 			for(Rect j : boundRect){
 				if(r == j || r == null || j == null)
 					continue;
-				if(1.0-Math.abs(Math.max(r.width, j.width) / Math.min(r.width, j.width)) < WIDTH_THRESH)
+				if(Math.abs(1.0-Math.abs(Math.max(r.width, j.width) / Math.min(r.width, j.width))) < WIDTH_THRESH)
 					width = r.width;
 			}
 		}
 		
 		//Remove rects with diff widths
 		for(int i = 0; i < boundRect.length; i++){
-			if(boundRect[i] == null)
+			if(boundRect[i] == null || width == 0)
 				continue;
-			if(1-Math.abs(Math.max(width, boundRect[i].width) / Math.min(width, boundRect[i].width)) > WIDTH_THRESH)
+			if(boundRect[i].width == 0 || Math.abs(1.0-Math.abs(Math.max(width, boundRect[i].width) / Math.min(width, boundRect[i].width))) > WIDTH_THRESH)
 				boundRect[i] = null;
 		}
 		
-		//Remove 3 max rectangles and add to impor Rects
-		for(int i = 0; i < imporRects.length; i++){
-//			System.out.println("Bound: " + Arrays.toString(boundRect));
-			int indexWithMax = findMaxRectIndex(boundRect);
-			if(indexWithMax < 0){
-				continue;
+		boolean pairFound = false;
+		//Check to see if there are two rects with same width, and if multiple largest area prioritized
+		if(arraySize(boundRect) > 2){
+			imporRects[0] = new Rect(0,0,0,0);
+			imporRects[1] = new Rect(0,0,0,0);
+			for(Rect r : boundRect){
+				for(Rect r1 : boundRect){
+					if(r == r1 || r == null || r1 == null)
+						continue;
+					//Same Area: two squares among alot of others
+					if((Math.abs(r.height - r1.height) < X_OFFSET_THRESH &&  //Areas have same height
+							((Math.abs(1.0 - Math.max(r.area(), r1.area()) / Math.min(r.area(), r1.area()))) < AreaSimularityThresh) && //Areas similar
+							(r.area() > imporRects[0].area() && r.area() > imporRects[0].area()))){	//Area bigger than previously found rects
+						System.out.println("Same AREA");
+						imporRects[0] = r;
+						imporRects[1] = r1;
+						pairFound = true;
+					}
+				}
 			}
-			imporRects[i] = boundRect[indexWithMax];
-			boundRect[indexWithMax] = null;
+		}
+		if(!pairFound && arraySize(boundRect) > 2){
+			for(Rect r : boundRect){
+				for(Rect r1 : boundRect){
+					for(Rect r2 : boundRect){
+						if(pairFound || r == r1 || r == r2 || r1 == r2 || r2 == null || r == null || r1 == null)
+							continue;
+						
+						//Check same width and diff x-values
+						if(((Math.abs(r.width - r1.width) < X_OFFSET_THRESH && Math.abs(r.width - r2.width) < X_OFFSET_THRESH) && Math.abs(r1.x - r2.x) < X_OFFSET_THRESH) && 
+								Math.abs(r.height - (r1.br().y - r2.tl().y)) < X_OFFSET_THRESH){
+								
+							System.out.println("Same Stuff");
+							imporRects[0] = r;
+							imporRects[1] = r1;
+							imporRects[2] = r2;
+							pairFound = true;
+						}
+					}
+				}
+			}
 		}
 				
+		//Remove 3 max rectangles and add to impor Rects
+		if(!pairFound){
+			for(int i = 0; i < imporRects.length; i++){
+	//			System.out.println("Bound: " + Arrays.toString(boundRect));
+				int indexWithMax = findMaxRectIndex(boundRect);
+				if(indexWithMax < 0){
+					continue;
+				}
+				imporRects[i] = boundRect[indexWithMax];
+				boundRect[indexWithMax] = null;
+			}
+		}
+		
+		//Check if we need the third rect
+		if(imporRects[1] != null && imporRects[2] != null &&
+				Math.abs(imporRects[1].x - imporRects[2].x) > X_OFFSET_THRESH)
+				imporRects[2] = null;
+			
 		for(Rect r : imporRects){
 			if(r == null)
 				continue;
@@ -333,6 +380,15 @@ public class TrackRects implements Runnable{
 				return true;
 		}
 		return false;
+	}
+	
+	private double arraySize(Object[] in){
+		int count = 0;
+		for(Object i : in){
+			if(in != null)
+				count++;
+		}
+		return count;
 	}
 	
 	//Convert pixel point on screen, to heading error
