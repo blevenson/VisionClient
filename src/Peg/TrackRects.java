@@ -9,6 +9,7 @@ import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.ImageIcon;
@@ -43,6 +44,7 @@ public class TrackRects implements Runnable{
 	private final int LOW_THRESHOLD = 3;
 	private final double MAGNITUDE_THRESH = 0.5;
 	private final double SimularityThresh = 5;
+	private final double WIDTH_THRESH = 0.7;
 	
 	private final double FOCAL_LENGTH = 1892.8;//2.8; //pixels
 	private final double CENTER_X = 320;
@@ -276,14 +278,27 @@ public class TrackRects implements Runnable{
 						Math.abs(boundRect[i].x - boundRect[j].x) < SimularityThresh)
 					boundRect[j] = null;
 			}
-			
-		}
+		}	
+		System.out.println("Bounded: " + Arrays.toString(boundRect));
 		//Check if it should have 3 rects or just 2
-		int avgWidth = 0;
+		int width = 0;
+		
 		for(Rect r : boundRect){
-			
+			for(Rect j : boundRect){
+				if(r == j || r == null || j == null)
+					continue;
+				if(1.0-Math.abs(Math.max(r.width, j.width) / Math.min(r.width, j.width)) < WIDTH_THRESH)
+					width = r.width;
+			}
 		}
 		
+		//Remove rects with diff widths
+		for(int i = 0; i < boundRect.length; i++){
+			if(boundRect[i] == null)
+				continue;
+			if(1-Math.abs(Math.max(width, boundRect[i].width) / Math.min(width, boundRect[i].width)) > WIDTH_THRESH)
+				boundRect[i] = null;
+		}
 		
 		//Remove 3 max rectangles and add to impor Rects
 		for(int i = 0; i < imporRects.length; i++){
