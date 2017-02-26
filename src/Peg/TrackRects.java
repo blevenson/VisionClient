@@ -278,6 +278,12 @@ public class TrackRects implements Runnable{
 			}
 			
 		}
+		//Check if it should have 3 rects or just 2
+		int avgWidth = 0;
+		for(Rect r : boundRect){
+			
+		}
+		
 		
 		//Remove 3 max rectangles and add to impor Rects
 		for(int i = 0; i < imporRects.length; i++){
@@ -294,11 +300,7 @@ public class TrackRects implements Runnable{
 			if(r == null)
 				continue;
 			Core.rectangle(display, r.tl(), r.br(), new Scalar(0, 0, 255), 2, 8, 0 );
-		}
-		
-		//Check if it should have 3 rects or just 2
-		
-		
+		}		
 		
 		System.out.println("Important: " + Arrays.toString(imporRects));
 		
