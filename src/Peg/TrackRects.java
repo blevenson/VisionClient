@@ -44,7 +44,7 @@ public class TrackRects implements Runnable{
 	private final int LOW_THRESHOLD = 3;
 	private final double MAGNITUDE_THRESH = 0.5;
 	private final double SimularityThresh = 5;
-	private final double AreaSimularityThresh = 0.25;
+	private final double AreaSimularityThresh = 0.17;
 	private final double WIDTH_THRESH = 0.7;
 	private final double X_OFFSET_THRESH = 10;
 	
@@ -278,28 +278,30 @@ public class TrackRects implements Runnable{
 		}	
 		System.out.println("Bounded: " + Arrays.toString(boundRect));
 		//Check if it should have 3 rects or just 2
-		int width = 0;
 		
-		for(Rect r : boundRect){
-			for(Rect j : boundRect){
-				if(r == j || r == null || j == null)
-					continue;
-				if(Math.abs(1.0-Math.abs(Math.max(r.width, j.width) / Math.min(r.width, j.width))) < WIDTH_THRESH)
-					width = r.width;
-			}
-		}
-		
-		//Remove rects with diff widths
-		for(int i = 0; i < boundRect.length; i++){
-			if(boundRect[i] == null || width == 0)
-				continue;
-			if(boundRect[i].width == 0 || Math.abs(1.0-Math.abs(Math.max(width, boundRect[i].width) / Math.min(width, boundRect[i].width))) > WIDTH_THRESH)
-				boundRect[i] = null;
-		}
+//		int width = 0;
+//		
+//		for(Rect r : boundRect){
+//			for(Rect j : boundRect){
+//				if(r == j || r == null || j == null)
+//					continue;
+//				if(Math.abs(1.0 - (Math.max(r.width, j.width) / Math.min(r.width, j.width))) < WIDTH_THRESH)
+//					width = r.width;
+//			}
+//		}
+//		
+//		//Remove rects with diff widths
+//		for(int i = 0; i < boundRect.length; i++){
+//			if(boundRect[i] == null || width == 0)
+//				continue;
+//			if(boundRect[i].width == 0 || Math.abs(1.0 - Math.max(width, boundRect[i].width) / Math.min(width, boundRect[i].width)) > WIDTH_THRESH)
+//				boundRect[i] = null;
+//		}
 		
 		boolean pairFound = false;
 		//Check to see if there are two rects with same width, and if multiple largest area prioritized
 		if(arraySize(boundRect) > 2){
+			System.out.println("Checking: " + Arrays.toString(boundRect));
 			imporRects[0] = new Rect(0,0,0,0);
 			imporRects[1] = new Rect(0,0,0,0);
 			for(Rect r : boundRect){
@@ -307,10 +309,11 @@ public class TrackRects implements Runnable{
 					if(r == r1 || r == null || r1 == null)
 						continue;
 					//Same Area: two squares among alot of others
-					if((Math.abs(r.height - r1.height) < X_OFFSET_THRESH &&  //Areas have same height
+					if((Math.abs(1.0 - (Math.max(r.height, r1.height) / Math.min(r.height, r1.height))) < WIDTH_THRESH &&  //Areas have same height
+							(Math.abs(1.0 - Math.max(r.width, r1.width) / Math.min(r.width, r1.width)) < WIDTH_THRESH) &&
 							((Math.abs(1.0 - Math.max(r.area(), r1.area()) / Math.min(r.area(), r1.area()))) < AreaSimularityThresh) && //Areas similar
-							(r.area() > imporRects[0].area() && r.area() > imporRects[0].area()))){	//Area bigger than previously found rects
-						System.out.println("Same AREA");
+							(r.area() > imporRects[0].area() && r1.area() > imporRects[1].area()))){	//Area bigger than previously found rects
+						System.out.println("Same AREA: " + r.area() + "\t" + r1.area());
 						imporRects[0] = r;
 						imporRects[1] = r1;
 						pairFound = true;
@@ -322,18 +325,23 @@ public class TrackRects implements Runnable{
 			for(Rect r : boundRect){
 				for(Rect r1 : boundRect){
 					for(Rect r2 : boundRect){
-						if(pairFound || r == r1 || r == r2 || r1 == r2 || r2 == null || r == null || r1 == null)
+						if(r == r1 || r == r2 || r1 == r2 || r2 == null || r == null || r1 == null)
 							continue;
 						
 						//Check same width and diff x-values
-						if(((Math.abs(r.width - r1.width) < X_OFFSET_THRESH && Math.abs(r.width - r2.width) < X_OFFSET_THRESH) && Math.abs(r1.x - r2.x) < X_OFFSET_THRESH) && 
-								Math.abs(r.height - (r1.br().y - r2.tl().y)) < X_OFFSET_THRESH){
+						if(((Math.abs(1.0 - Math.max(r.width, r1.width) / Math.min(r.width, r1.width)) < WIDTH_THRESH && 
+								Math.abs(1.0 - Math.max(r.width, r2.width) / Math.min(r.width, r2.width)) < WIDTH_THRESH)) && 
+								(Math.abs(1.0 - Math.max(r1.x, r.x) / Math.min(r1.x, r.x)) < WIDTH_THRESH) && 
+								Math.abs(1.0 - Math.max(r.height, (r1.br().y - r2.tl().y)) / Math.min(r.height, (r1.br().y - r2.tl().y))) < WIDTH_THRESH){
 								
 							System.out.println("Same Stuff");
-							imporRects[0] = r;
-							imporRects[1] = r1;
-							imporRects[2] = r2;
-							pairFound = true;
+							//Only save the first ones or bigger areas
+							if((imporRects[0] == null || imporRects[1] == null || imporRects[2] == null) ||
+									 (r.area()> imporRects[0].area() && r1.area()> imporRects[1].area() && r2.area()> imporRects[2].area())){
+								imporRects[0] = r;
+								imporRects[1] = r1;
+								imporRects[2] = r2;
+							}
 						}
 					}
 				}
@@ -382,10 +390,10 @@ public class TrackRects implements Runnable{
 		return false;
 	}
 	
-	private double arraySize(Object[] in){
+	private int arraySize(Object[] in){
 		int count = 0;
 		for(Object i : in){
-			if(in != null)
+			if(i != null)
 				count++;
 		}
 		return count;
