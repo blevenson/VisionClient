@@ -271,32 +271,14 @@ public class TrackRects implements Runnable{
 			for(int j = 0; j < boundRect.length; j++){
 				if(i == j || boundRect[i] == null || boundRect[j] == null)
 					continue;
-				if(Math.abs(boundRect[i].height - boundRect[j].height) < SimularityThresh &&
-						Math.abs(boundRect[i].x - boundRect[j].x) < SimularityThresh)
+				if((Math.abs(boundRect[i].height - boundRect[j].height) < SimularityThresh &&
+						Math.abs(boundRect[i].x - boundRect[j].x) < SimularityThresh) ||
+						boundRect[j].width > boundRect[j].height)
 					boundRect[j] = null;
 			}
 		}	
 		System.out.println("Bounded: " + Arrays.toString(boundRect));
 		//Check if it should have 3 rects or just 2
-		
-//		int width = 0;
-//		
-//		for(Rect r : boundRect){
-//			for(Rect j : boundRect){
-//				if(r == j || r == null || j == null)
-//					continue;
-//				if(Math.abs(1.0 - (Math.max(r.width, j.width) / Math.min(r.width, j.width))) < WIDTH_THRESH)
-//					width = r.width;
-//			}
-//		}
-//		
-//		//Remove rects with diff widths
-//		for(int i = 0; i < boundRect.length; i++){
-//			if(boundRect[i] == null || width == 0)
-//				continue;
-//			if(boundRect[i].width == 0 || Math.abs(1.0 - Math.max(width, boundRect[i].width) / Math.min(width, boundRect[i].width)) > WIDTH_THRESH)
-//				boundRect[i] = null;
-//		}
 		
 		boolean pairFound = false;
 		//Check to see if there are two rects with same width, and if multiple largest area prioritized
@@ -311,6 +293,8 @@ public class TrackRects implements Runnable{
 					//Same Area: two squares among alot of others
 					if((Math.abs(1.0 - (Math.max(r.height, r1.height) / Math.min(r.height, r1.height))) < WIDTH_THRESH &&  //Areas have same height
 							(Math.abs(1.0 - Math.max(r.width, r1.width) / Math.min(r.width, r1.width)) < WIDTH_THRESH) &&
+							(r.height/r.width == 2) && 
+							(r1.height/r1.width == 2) && 
 							((Math.abs(1.0 - Math.max(r.area(), r1.area()) / Math.min(r.area(), r1.area()))) < AreaSimularityThresh) && //Areas similar
 							(r.area() > imporRects[0].area() && r1.area() > imporRects[1].area()))){	//Area bigger than previously found rects
 						System.out.println("Same AREA: " + r.area() + "\t" + r1.area());
@@ -329,9 +313,12 @@ public class TrackRects implements Runnable{
 							continue;
 						
 						//Check same width and diff x-values
+						//r = big one, r1 = bottom small, r2 = top small
 						if(((Math.abs(1.0 - Math.max(r.width, r1.width) / Math.min(r.width, r1.width)) < WIDTH_THRESH && 
 								Math.abs(1.0 - Math.max(r.width, r2.width) / Math.min(r.width, r2.width)) < WIDTH_THRESH)) && 
 								(Math.abs(1.0 - Math.max(r1.x, r.x) / Math.min(r1.x, r.x)) < WIDTH_THRESH) && 
+								(r.height/r.width == 2) && 
+								((r1.br().y - r2.tl().y)/((r1.width + r2.width)/2) == 2) && 
 								Math.abs(1.0 - Math.max(r.height, (r1.br().y - r2.tl().y)) / Math.min(r.height, (r1.br().y - r2.tl().y))) < WIDTH_THRESH){
 								
 							System.out.println("Same Stuff");
